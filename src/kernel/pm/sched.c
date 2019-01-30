@@ -59,18 +59,12 @@ PUBLIC void resume(struct process *proc)
 		sched(proc);
 }
 
-int random(void){
-	extern unsigned _next;
-	_next = (_next * 1103515245) + 12345;
-	return ((_next >> 16) & 0x7fff);
-}
-
 /**
  * @brief Yields the processor.
  */
 PUBLIC void yield(void)
 {
-		struct process *p;    /* Working process.     */
+	struct process *p;    /* Working process.     */
 	struct process *next; /* Next process to run. */
 
 	/* Re-schedule process for execution. */
@@ -94,53 +88,29 @@ PUBLIC void yield(void)
 
 	/* Choose a process to run next. */
 	next = IDLE;
-	int nbMaxTicket = 0;
-
 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
 	{
 		/* Skip non-ready process. */
 		if (p->state != PROC_READY)
 			continue;
 		
-		nbMaxTicket += p -> tickets;
-
 		/*
 		 * Process with higher
 		 * waiting time found.
 		 */
-		/////////////////////////PRIORITY////////////////////////////
-		// if (p -> priority > next -> priority){
-		// 	next->counter++;
-		// 	next = p;
-		// }else if (p-> priority == next -> priority){
-		// 	if (p-> nice > next -> nice){
-		// 		next->counter++;
-		// 		next = p;
-		// 	}else if (p-> nice == next -> nice){
-		// 		if(p -> counter > next -> counter){
-		// 			next->counter++;
-		// 			next = p;
-		// 		}else{
-		// 			p -> counter++;
-		// 		}
-		// 	}else{
-		// 		p -> counter++;
-		// 	}
-		// }else{
-		// 	p -> counter++;
-		// }
-		/////////////////////////END PRIORITY/////////////////////////
-
+		if (p->counter > next->counter)
+		{
+			next->counter++;
+			next = p;
+		}
+			
+		/*
+		 * Increment waiting
+		 * time of process.
+		 */
+		else
+			p->counter++;
 	}
-	int randticket = (random()%nbMaxTicket)+1;
-	p = FIRST_PROC;
-	do{
-		randticket -= p-> tickets;
-		p++;
-
-	}while(randticket > 0);
-
-	next = p;
 	
 	/* Switch to next process. */
 	next->priority = PRIO_USER;
@@ -148,4 +118,3 @@ PUBLIC void yield(void)
 	next->counter = PROC_QUANTUM;
 	switch_to(next);
 }
-

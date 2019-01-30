@@ -99,6 +99,7 @@ PUBLIC void yield(void)
 		nb_max_tickets += p->nb_tickets;
 	}
 
+	p = FIRST_PROC;
 	int rand_ticket = krand()%nb_max_tickets + 1;
 	
 	do {

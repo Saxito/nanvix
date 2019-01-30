@@ -22,6 +22,7 @@
 #include <nanvix/const.h>
 #include <nanvix/hal.h>
 #include <nanvix/pm.h>
+#include <nanvix/klib.h>
 #include <signal.h>
 
 /**
@@ -88,30 +89,25 @@ PUBLIC void yield(void)
 
 	/* Choose a process to run next. */
 	next = IDLE;
+	int nb_max_tickets = 0;
 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
 	{
 		/* Skip non-ready process. */
 		if (p->state != PROC_READY)
 			continue;
 		
-		/*
-		 * Process with higher
-		 * waiting time found.
-		 */
-		if (p->counter > next->counter)
-		{
-			next->counter++;
-			next = p;
-		}
-			
-		/*
-		 * Increment waiting
-		 * time of process.
-		 */
-		else
-			p->counter++;
+		nb_max_tickets += p->nb_tickets;
 	}
+
+	int rand_ticket = krand()%nb_max_tickets + 1;
 	
+	do {
+		rand_ticket -= p->nb_tickets;
+		p++;
+	} while (rand_ticket > 0 && p != LAST_PROC);
+
+	next = p;
+
 	/* Switch to next process. */
 	next->priority = PRIO_USER;
 	next->state = PROC_RUNNING;

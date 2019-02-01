@@ -23,6 +23,7 @@
 #include <nanvix/hal.h>
 #include <nanvix/pm.h>
 #include <signal.h>
+#include <nanvix/klib.h>
 
 /**
  * @brief Schedules a process to execution.
@@ -59,6 +60,17 @@ PUBLIC void resume(struct process *proc)
 		sched(proc);
 }
 
+
+PUBLIC int nombreticket(void){
+	struct process *p;
+	int totticket = 0;
+	for (p = FIRST_PROC; p <= LAST_PROC; p++) {
+		if(!IS_VALID(p))
+			continue;
+		totticket += p->tickets;
+	}
+	return totticket;
+}
 /**
  * @brief Yields the processor.
  */
@@ -73,6 +85,8 @@ PUBLIC void yield(void)
 
 	/* Remember this process. */
 	last_proc = curr_proc;
+	next = IDLE;
+	int nbMaxTicket = 0;
 
 	/* Check alarm. */
 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
@@ -84,32 +98,55 @@ PUBLIC void yield(void)
 		/* Alarm has expired. */
 		if ((p->alarm) && (p->alarm < ticks))
 			p->alarm = 0, sndsig(p, SIGALRM);
+
 	}
 
 	/* Choose a process to run next. */
-	next = IDLE;
+	nbMaxTicket = nombreticket();
+	kprintf("max  = %d", nbMaxTicket);
+	ksrand(27);
+	int randticket = (krand()%nbMaxTicket)+1;
+	kprintf("rand  = %d", randticket);
+
+
+
 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
 	{
 		/* Skip non-ready process. */
 		if (p->state != PROC_READY)
 			continue;
 		
+		randticket -= p->tickets;
+
+		if(randticket >= 0){
+			next = p;
+		}
+
 		/*
 		 * Process with higher
 		 * waiting time found.
 		 */
-		if (p->counter > next->counter)
-		{
-			next->counter++;
-			next = p;
-		}
-			
-		/*
-		 * Increment waiting
-		 * time of process.
-		 */
-		else
-			p->counter++;
+
+		// if (p -> priority > next -> priority){
+		//  	next->counter++;
+		//  	next = p;
+		// }else if (p-> priority == next -> priority){
+		//  	if (p-> nice > next -> nice){
+		//  		next->counter++;
+		//  		next = p;
+		//  	}else if (p-> nice == next -> nice){
+		//  		if(p -> counter > next -> counter){
+		//  			next->counter++;
+		//  			next = p;
+		//  		}else{
+		//  			p -> counter++;
+		//  		}
+		//  	}else{
+		//  		p -> counter++;
+		// 	}
+		// }else{
+		// 	p -> counter++;
+		// }
 	}
 	
 	/* Switch to next process. */

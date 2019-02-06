@@ -103,10 +103,8 @@ PUBLIC void yield(void)
 
 	/* Choose a process to run next. */
 	nbMaxTicket = nombreticket();
-	kprintf("max  = %d", nbMaxTicket);
 	ksrand(27);
 	int randticket = (krand()%nbMaxTicket)+1;
-	kprintf("rand  = %d", randticket);
 
 
 

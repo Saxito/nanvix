@@ -11,16 +11,18 @@ int sys_semget(int key){
 
 	if(semid == 0){
 		// we create a new semaphore 
-		struct semaphore s;
-		s.index = first_free();
-		s.size = 1;
-		tab_sem[s.index] = s;
-		
-		return s.index;
-	}else{
-		return semid;
+		semid =create(0);
 	}
-
 	
+	return semid;
+}
+
+int create(int n){
+	struct semaphore s;
+	s.index = first_free();
+	s.size = n;
+	tab_sem[s.index] = s;
+	return s.index;
+
 }
 

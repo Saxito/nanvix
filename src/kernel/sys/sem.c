@@ -6,9 +6,10 @@ PUBLIC struct semaphore {
 	int size;
 	struct process * waiting;
 
-	create(int n) {
+	int create(int n) {
 		index = tab_sem.first_free();
 		size = n;
+		return index;
 	}
 
 	void down() {

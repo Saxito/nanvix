@@ -1,6 +1,15 @@
 #include <sys/sem.h>
 
 
+int create(int n){
+	struct semaphore s;
+	s.index = first_free();
+	s.size = n;
+	tab_sem[s.index] = s;
+	return s.index;
+
+}
+
 int sys_semget(int key){
 	int semid = 0;
 	for(int i = 0; i<SEM_MAX; i++){
@@ -11,18 +20,11 @@ int sys_semget(int key){
 
 	if(semid == 0){
 		// we create a new semaphore 
-		semid =create(0);
+		semid = create(0);
 	}
 	
 	return semid;
 }
 
-int create(int n){
-	struct semaphore s;
-	s.index = first_free();
-	s.size = n;
-	tab_sem[s.index] = s;
-	return s.index;
 
-}
 

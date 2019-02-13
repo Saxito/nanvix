@@ -1,5 +1,6 @@
 #include <nanvix/syscall.h>
-#include <nanvix/sem.c>
+#include <sys/sem.h>
+#include <nanvix/pm.h>
 
 
 /*
@@ -10,15 +11,32 @@ positive l’opération up ().
 La fonction retourne 0 en cas de réussite, ou −1 en cas d’erreur.
 */
 
+void down(struct semaphore s) {
+	if (s.size > 0) {
+		s.size --;
+	}else {
+		sleep(s.waiting->chain,curr_proc->priority);
+	}
+}
+
+void up(struct semaphore s) {
+	if (s.size == 0) {
+		wakeup(s.waiting->chain);
+	}else {
+		s.size ++;
+	}
+}
+
 int sys_semop(int semid, int op){
-	semaphore s;
+	struct semaphore s;
 	int find = 0;
 	for(int i = 0 ; i < SEM_MAX && find == 0; i++){
 		s = tab_sem[i];
-		if(s->index == semid){
+		if(s.index == semid){
 			find = 1;
 		}
 	}
+	
 	if (find != 0){
 		if (op < 0){
 			down(s);
@@ -28,22 +46,6 @@ int sys_semop(int semid, int op){
 	}else{
 		return -1;
 	}
-}
 
-void down(semaphore s) {
-	if (s->size > 0) {
-		s->size --;
-	}
-	else {
-		curr_proc.sleep(waiting->chain,curr_proc->priority);
-	}
-}
-
-void up(semaphore s) {
-	if (s->size == 0) {
-		waiting.wakeup(waiting->chain);
-	}
-	else {
-		s->size ++;
-	}
+	return 0;
 }

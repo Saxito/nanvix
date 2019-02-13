@@ -1,4 +1,5 @@
 #include <nanvix/syscall.h>
+#include <nanvix/sem.c>
 
 /*
 La fonction semop permet d’effectuer des opérations atomiques incrémentant
@@ -13,17 +14,35 @@ int semop(int semid, int op){
 	int find = 0
 	for(int i = 0 ; i < SEM_MAX && find == 0; i++){
 		s = tab_sem[i];
-		if(s->id == semid){
+		if(s->index == semid){
 			find = 1;
 		}
 	}
 	if (find != 0){
-		if (op < 0){ // down()
-
-		}else { // up()
-			
+		if (op < 0){
+			down(s);
+		}else {
+			up(s);
 		}
 	}else{
 		return -1;
+	}
+}
+
+void down(semaphore s) {
+	if (s->size > 0) {
+		s->size --;
+	}
+	else {
+		curr_proc.sleep(waiting->chain,curr_proc->priority);
+	}
+}
+
+void up(semaphore s) {
+	if (s->size == 0) {
+		waiting.wakeup(waiting->chain);
+	}
+	else {
+		s->size ++;
 	}
 }

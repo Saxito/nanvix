@@ -37,6 +37,9 @@
 		struct process * waiting;
 	}semaphore;
 
+	extern void init_tab_sem();
+	extern int first_free();
+
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);
 	extern int semop(int, int);

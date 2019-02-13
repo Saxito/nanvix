@@ -31,16 +31,11 @@
 	/**@}*/
 
 	/* Forward definitions. */
-	public struct semaphore {
+	extern struct semaphore {
 		int index;
 		int size;
 		struct process * waiting;
-
-		create(int);
-		up();
-		down();
-		destruct();
-	};
+	} semaphore;
 
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);

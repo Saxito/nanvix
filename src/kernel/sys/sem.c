@@ -1,7 +1,7 @@
 #include <sys/sem.h>
 #include <nanvix/pm.h>
 
-PUBLIC struct semaphore {
+/*PUBLIC struct semaphore {
 	int index;
 	int size;
 	struct process * waiting;
@@ -36,11 +36,11 @@ PUBLIC struct semaphore {
 
 };
 
-PUBLIC struct semaphore tab_sem[SEM_MAX];
+PUBLIC struct semaphore tab_sem[SEM_MAX];*/
 
 PUBLIC void init_tab_sem() {
 	for (int i = 0; i < SEM_MAX; i++) {
-		tab_sem[i].size = -1
+		tab_sem[i].size = -1;
 	}
 }
 
@@ -50,4 +50,5 @@ PUBLIC int first_free() {
 			return i;
 		}
 	}
+	return -1;
 }

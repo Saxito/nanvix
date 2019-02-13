@@ -82,7 +82,7 @@ PUBLIC void yield(void)
 	/* Remember this process. */
 	last_proc = curr_proc;
 	next = IDLE;
-	int nbMaxTicket = 0;
+
 
 	/* Check alarm. */
 	for (p = FIRST_PROC; p <= LAST_PROC; p++)

@@ -33,6 +33,7 @@
 	/* Forward definitions. */
 	extern struct semaphore {
 		int index;
+		int value;
 		int size;
 		struct process * waiting;
 	}semaphore;

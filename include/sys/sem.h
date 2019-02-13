@@ -35,7 +35,7 @@
 		int index;
 		int size;
 		struct process * waiting;
-	} semaphore;
+	}semaphore;
 
 	extern void init_tab_sem();
 	extern int first_free();

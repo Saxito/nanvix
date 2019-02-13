@@ -22,7 +22,6 @@
 #include <nanvix/const.h>
 #include <nanvix/hal.h>
 #include <nanvix/pm.h>
-#include <nanvix/klib.h>
 #include <signal.h>
 
 /**
@@ -58,6 +57,13 @@ PUBLIC void resume(struct process *proc)
 	/* Resume only if process has stopped. */
 	if (proc->state == PROC_STOPPED)
 		sched(proc);
+}
+
+unsigned long int next = 26;
+
+PUBLIC int myrandom(void) {
+	next = next*1103515245 +12345;
+    return (unsigned int) (next*65536)%32768;
 }
 
 /**
@@ -99,13 +105,12 @@ PUBLIC void yield(void)
 		nb_max_tickets += p->nb_tickets;
 	}
 
-	p = FIRST_PROC;
-	int rand_ticket = krand()%nb_max_tickets + 1;
+	int rand_ticket = myrandom()%nb_max_tickets + 1;
 	
 	do {
 		rand_ticket -= p->nb_tickets;
 		p++;
-	} while (rand_ticket > 0 && p != LAST_PROC);
+	} while (rand_ticket > 0);
 
 	next = p;
 

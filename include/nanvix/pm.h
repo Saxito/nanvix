@@ -205,6 +205,7 @@
 		struct process *next;    /**< Next process in a list. */
 		struct process **chain;  /**< Sleeping chain.         */
 		int nb_tickets;
+
 		/**@}*/
 	};
 	

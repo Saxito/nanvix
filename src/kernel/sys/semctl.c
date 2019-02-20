@@ -1,13 +1,16 @@
 #include <nanvix/syscall.h>
 #include <sys/sem.h> 
+#include <nanvix/klib.h>
 
 int sys_semctl(int semid, int cmd, int val) {
 	switch (cmd) {
 		case GETVAL:
+			kprintf("%d",get_index(semid));
 			return get_index(semid);
 			break;
 		case SETVAL:
-			if (get_size(semid) == -1) {
+
+			if (get_value(semid) == SEM_MAX + 1) {
 				return -1;
 			} else {
 				set_size(semid,val);

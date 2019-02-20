@@ -1,7 +1,7 @@
 #include <nanvix/syscall.h>
 #include <sys/sem.h>
 #include <nanvix/pm.h>
-
+#include <nanvix/klib.h>
 
 /*
 La fonction semop permet d’effectuer des opérations atomiques incrémentant
@@ -28,23 +28,25 @@ void up(struct semaphore s) {
 }
 
 int sys_semop(int semid, int op){
+	kprintf("debut semop");
 	struct semaphore s;
 	int find = 0;
-	for(int i = 0 ; i < SEM_MAX && find == 0; i++){
-		s = get_sem(i);
-		if(s.index == semid){
-			find = 1;
-		}
-	}
+	kprintf("debut get-sem");
+	s = get_sem(semid);
+	kprintf("fin get sem");
+
 	if (find != 0){
+		kprintf("find");
 		if (op < 0){
 			down(s);
 		}else {
 			up(s);
 		}
+		kprintf("end find");
 	}else{
 		return -1;
 	}
 
+	kprintf("final end");
 	return 0;
 }

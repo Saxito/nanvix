@@ -1,4 +1,5 @@
  #include <sys/sem.h>
+#include <nanvix/klib.h>
 
 
 int create(int n, unsigned key){
@@ -7,15 +8,17 @@ int create(int n, unsigned key){
 	s.value = n;
 	s.size = n;
 	s.key = key;
-	set_sem(s.index, s);
+
+	set_sem(s.index, &s);
+
 	return s.index;
 
 }
 
 int sys_semget(unsigned key){
 	int semid = 0;
-	for(int i = 0; i<SEM_MAX; i++){
-		if(get_key(i) == key && get_size(i) != -1){
+	for(int i = 0; i < SEM_MAX; i++){
+		if(get_key(i) == key && get_value(i) != SEM_MAX+1){
 			semid = i;
 		}
 	}
@@ -23,7 +26,6 @@ int sys_semget(unsigned key){
 		// we create a new semaphore 
 		semid = create(0, key);
 	}
-	
 	return semid;
 }
 

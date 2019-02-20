@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <string.h>
 
+
 /* Test flags. */
 #define EXTENDED (1 << 0)
 #define FULL     (1 << 1)
@@ -405,7 +406,7 @@ static int sched_test3(void)
 {                                                     \
 	assert(lseek((a), 0, SEEK_SET) != -1);            \
 	assert(write((a), &(b), sizeof(b)) == sizeof(b)); \
-}                                                     \
+}                                                      \
 
 /**
  * @brief Gets an item from a buffer.
@@ -437,7 +438,7 @@ int semaphore_test3(void)
 	buffer_fd = open("buffer", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (buffer_fd < 0)
 		return (-1);
-	
+
 	/* Create semaphores. */
 	SEM_CREATE(mutex, 1);
 	SEM_CREATE(empty, 2);
@@ -460,7 +461,7 @@ int semaphore_test3(void)
 			SEM_DOWN(mutex);
 			
 			PUT_ITEM(buffer_fd, item);
-				
+			
 			SEM_UP(mutex);
 			SEM_UP(full);
 		}

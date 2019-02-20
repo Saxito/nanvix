@@ -90,7 +90,7 @@
 
 	
 
-#ifndef ASM_FILE
+#ifndef _ASM_FILE_
 
 	/* System calls prototypes. */
 	EXTERN unsigned sys_alarm(unsigned seconds);
@@ -278,6 +278,6 @@
 
 
 
-#endif /* ASM_FILE */
+#endif /* _ASM_FILE_ */
 
 #endif /* NANVIX_SYSCALL_H_ */

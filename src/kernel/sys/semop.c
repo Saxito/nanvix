@@ -31,7 +31,7 @@ int sys_semop(int semid, int op){
 	struct semaphore s;
 	int find = 0;
 	for(int i = 0 ; i < SEM_MAX && find == 0; i++){
-		s = tab_sem[i];
+		s = get_sem(i);
 		if(s.index == semid){
 			find = 1;
 		}

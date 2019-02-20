@@ -27,6 +27,7 @@
 #include <nanvix/mm.h>
 #include <nanvix/pm.h>
 #include <nanvix/klib.h>
+#include <sys/sem.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <limits.h>
@@ -73,6 +74,7 @@ PUBLIC void pm_init(void)
 {	
 	int i;             /* Loop index.      */
 	struct process *p; /* Working process. */
+	init_tab_sem();
 	
 	/* Initialize the process table. */
 	for (p = FIRST_PROC; p <= LAST_PROC; p++)

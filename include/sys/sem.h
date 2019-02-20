@@ -40,11 +40,15 @@
 
 	extern void init_tab_sem();
 	extern int first_free();
+	extern int get_size(int);
+	extern int get_index(int);
+	extern int get_value(int);
+	extern void set_size(int,int);
+	extern struct semaphore get_sem(int);
+	extern void set_sem(int,struct semaphore);
 
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);
 	extern int semop(int, int);
-
-	extern struct semaphore tab_sem[SEM_MAX];
 
 #endif /* SEM_H_ */

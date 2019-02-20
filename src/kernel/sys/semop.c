@@ -15,7 +15,7 @@ void down(struct semaphore s) {
 	if (s.size > 0) {
 		s.size --;
 	}else {
-		sleep(s.waiting->chain,curr_proc->priority);
+		sleep(s.waiting->chain, curr_proc->priority);
 	}
 }
 
@@ -36,7 +36,6 @@ int sys_semop(int semid, int op){
 			find = 1;
 		}
 	}
-	
 	if (find != 0){
 		if (op < 0){
 			down(s);

@@ -1,40 +1,6 @@
 #include <sys/sem.h>
 #include <nanvix/pm.h>
 
-/*PUBLIC struct semaphore {
-	int index;
-	int size;
-	struct process * waiting;
-
-	int create(int n) {
-		index = tab_sem.first_free();
-		size = n;
-		return index;
-	}
-
-	void down() {
-		if (size > 0) {
-			size --;
-		}
-		else {
-			curr_proc.sleep(waiting->chain,curr_proc->priority);
-		}
-	}
-
-	void up() {
-		if (size == 0) {
-			waiting.wakeup(waiting->chain);
-		}
-		else {
-			size ++;
-		}
-	}
-
-	void destroy() {
-		tab_sem[index].size = -1;
-	}
-
-};*/
 
 PUBLIC struct semaphore tab_sem[SEM_MAX];
 
@@ -66,6 +32,10 @@ PUBLIC struct semaphore get_sem(int id) {
 
 PUBLIC void set_sem(int id, struct semaphore sem) {
 	tab_sem[id] = sem;
+}
+
+PUBLIC unsigned get_key(int id){
+	return tab_sem[id].key;
 }
 
 PUBLIC int first_free() {

@@ -3,10 +3,10 @@
 
 int sys_semctl(int semid, int cmd, int val) {
 	switch (cmd) {
-		case 1:
+		case GETVAL:
 			return get_index(semid);
 			break;
-		case 2:
+		case SETVAL:
 			if (get_size(semid) == -1) {
 				return -1;
 			} else {
@@ -14,7 +14,7 @@ int sys_semctl(int semid, int cmd, int val) {
 				return 0;
 			}
 			break;
-		case 3:
+		case IPC_RMID:
 			if (get_size(semid) == get_value(semid)) {
 				set_size(semid,-1);
 				return 0;

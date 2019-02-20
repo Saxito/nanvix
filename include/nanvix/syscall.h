@@ -86,6 +86,9 @@
  	#define NR_semget   48
  	#define NR_semctl   49
  	#define NR_semop    50
+	
+
+	
 
 #ifndef _ASM_FILE_
 
@@ -267,8 +270,12 @@
 
 	
 	EXTERN int sys_semget(int);
-	EXTERN int sys_semop(int,int);
+
 	EXTERN int sys_semctl(int,int,int);
+
+	EXTERN int sys_semop(int,int);
+
+
 
 
 #endif /* _ASM_FILE_ */

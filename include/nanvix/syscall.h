@@ -30,8 +30,9 @@
 	#include <ustat.h>
 	#include <utime.h>
 	
+	
 	/* Number of system calls. */
-	#define NR_SYSCALLS 48
+	#define NR_SYSCALLS 51
 	
 	/* System call numbers. */
 	#define NR_alarm     0
@@ -85,8 +86,11 @@
  	#define NR_semget   48
  	#define NR_semctl   49
  	#define NR_semop    50
+	
 
-#ifndef _ASM_FILE_
+	
+
+#ifndef ASM_FILE
 
 	/* System calls prototypes. */
 	EXTERN unsigned sys_alarm(unsigned seconds);
@@ -264,6 +268,16 @@
 	 */
 	EXTERN int sys_gticks(void);
 
-#endif /* _ASM_FILE_ */
+	
+	EXTERN int sys_semget(int);
+
+	EXTERN int sys_semctl(int,int,int);
+
+	EXTERN int sys_semop(int,int);
+
+
+
+
+#endif /* ASM_FILE */
 
 #endif /* NANVIX_SYSCALL_H_ */

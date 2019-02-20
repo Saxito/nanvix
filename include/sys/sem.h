@@ -24,12 +24,31 @@
 	 * @brief Comand values for semaphores.
 	 */
 	/**@{*/
-	#define GETVAL   0 /**< Returns the value of a semaphore. */
-	#define SETVAL   1 /**< Sets the value of a semaphore.    */
-	#define IPC_RMID 3 /**< Destroys a semaphore.            */
+	#define SEM_MAX     64
+	#define GETVAL		1
+	#define SETVAL		0
+	#define IPC_RMID	3
 	/**@}*/
 
 	/* Forward definitions. */
+	extern struct semaphore {
+		int index;
+		int value;
+		int size;
+		int key;
+		struct process * waiting;
+	}semaphore;
+
+	extern void init_tab_sem();
+	extern int first_free();
+	extern int get_size(int);
+	extern int get_index(int);
+	extern int get_value(int);
+	extern void set_size(int,int);
+	extern unsigned get_key(int);
+	extern struct semaphore get_sem(int);
+	extern void set_sem(int,struct semaphore);
+
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);
 	extern int semop(int, int);

@@ -1,0 +1,508 @@
+diff --git a/include/nanvix/pm.h b/include/nanvix/pm.h
+index cb89a6bb..dd8a0ff7 100644
+--- a/include/nanvix/pm.h
++++ b/include/nanvix/pm.h
+@@ -204,7 +204,8 @@
+     	unsigned alarm;          /**< Alarm.                  */
+ 		struct process *next;    /**< Next process in a list. */
+ 		struct process **chain;  /**< Sleeping chain.         */
+-		int tickets;
++		int nb_tickets;
++
+ 		/**@}*/
+ 	};
+ 	
+diff --git a/include/nanvix/syscall.h b/include/nanvix/syscall.h
+index 5b4a45bd..51ff112b 100644
+--- a/include/nanvix/syscall.h
++++ b/include/nanvix/syscall.h
+@@ -30,8 +30,9 @@
+ 	#include <ustat.h>
+ 	#include <utime.h>
+ 	
++	
+ 	/* Number of system calls. */
+-	#define NR_SYSCALLS 48
++	#define NR_SYSCALLS 51
+ 	
+ 	/* System call numbers. */
+ 	#define NR_alarm     0
+@@ -85,6 +86,9 @@
+  	#define NR_semget   48
+  	#define NR_semctl   49
+  	#define NR_semop    50
++	
++
++	
+ 
+ #ifndef _ASM_FILE_
+ 
+@@ -264,6 +268,16 @@
+ 	 */
+ 	EXTERN int sys_gticks(void);
+ 
++	
++	EXTERN int sys_semget(int);
++
++	EXTERN int sys_semctl(int,int,int);
++
++	EXTERN int sys_semop(int,int);
++
++
++
++
+ #endif /* _ASM_FILE_ */
+ 
+ #endif /* NANVIX_SYSCALL_H_ */
+diff --git a/include/sys/sem.h b/include/sys/sem.h
+index b90a8e02..33f50bf5 100644
+--- a/include/sys/sem.h
++++ b/include/sys/sem.h
+@@ -24,12 +24,31 @@
+ 	 * @brief Comand values for semaphores.
+ 	 */
+ 	/**@{*/
+-	#define GETVAL   0 /**< Returns the value of a semaphore. */
+-	#define SETVAL   1 /**< Sets the value of a semaphore.    */
+-	#define IPC_RMID 3 /**< Destroys a semaphore.            */
++	#define SEM_MAX     64
++	#define GETVAL		51
++	#define SETVAL		52
++	#define IPC_RMID	53
+ 	/**@}*/
+ 
+ 	/* Forward definitions. */
++	extern struct semaphore {
++		int index;
++		int value;
++		int size;
++		int key;
++		struct process * waiting;
++	}semaphore;
++
++	extern void init_tab_sem();
++	extern int first_free();
++	extern int get_size(int);
++	extern int get_index(int);
++	extern int get_value(int);
++	extern void set_size(int,int);
++	extern unsigned get_key(int);
++	extern struct semaphore get_sem(int);
++	extern void set_sem(int,struct semaphore);
++
+ 	extern int semget(unsigned);
+ 	extern int semctl(int, int, int);
+ 	extern int semop(int, int);
+diff --git a/src/kernel/pm/pm.c b/src/kernel/pm/pm.c
+index c3d06990..23951b16 100644
+--- a/src/kernel/pm/pm.c
++++ b/src/kernel/pm/pm.c
+@@ -27,6 +27,7 @@
+ #include <nanvix/mm.h>
+ #include <nanvix/pm.h>
+ #include <nanvix/klib.h>
++#include <sys/sem.h>
+ #include <sys/stat.h>
+ #include <signal.h>
+ #include <limits.h>
+@@ -73,6 +74,7 @@ PUBLIC void pm_init(void)
+ {	
+ 	int i;             /* Loop index.      */
+ 	struct process *p; /* Working process. */
++	init_tab_sem();
+ 	
+ 	/* Initialize the process table. */
+ 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
+diff --git a/src/kernel/pm/sched.c b/src/kernel/pm/sched.c
+index 8582a441..e70193bb 100644
+--- a/src/kernel/pm/sched.c
++++ b/src/kernel/pm/sched.c
+@@ -60,17 +60,13 @@ PUBLIC void resume(struct process *proc)
+ 		sched(proc);
+ }
+ 
++unsigned long int next = 26;
+ 
+-PUBLIC int nombreticket(void){
+-	struct process *p;
+-	int totticket = 0;
+-	for (p = FIRST_PROC; p <= LAST_PROC; p++) {
+-		if(!IS_VALID(p))
+-			continue;
+-		totticket += p->tickets;
+-	}
+-	return totticket;
++PUBLIC int myrandom(void) {
++	next = next*1103515245 +12345;
++    return (unsigned int) (next*65536)%32768;
+ }
++
+ /**
+  * @brief Yields the processor.
+  */
+@@ -86,7 +82,7 @@ PUBLIC void yield(void)
+ 	/* Remember this process. */
+ 	last_proc = curr_proc;
+ 	next = IDLE;
+-	int nbMaxTicket = 0;
++
+ 
+ 	/* Check alarm. */
+ 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
+@@ -102,11 +98,9 @@ PUBLIC void yield(void)
+ 	}
+ 
+ 	/* Choose a process to run next. */
+-	nbMaxTicket = nombreticket();
+-	ksrand(27);
+-	int randticket = (krand()%nbMaxTicket)+1;
+-
+ 
++	next = IDLE;
++	int nb_max_tickets = 0;
+ 
+ 	for (p = FIRST_PROC; p <= LAST_PROC; p++)
+ 	{
+@@ -114,39 +108,18 @@ PUBLIC void yield(void)
+ 		if (p->state != PROC_READY)
+ 			continue;
+ 		
+-		randticket -= p->tickets;
+-
+-		if(randticket >= 0){
+-			next = p;
+-		}
+-
+-		/*
+-		 * Process with higher
+-		 * waiting time found.
+-		 */
+-
+-		// if (p -> priority > next -> priority){
+-		//  	next->counter++;
+-		//  	next = p;
+-		// }else if (p-> priority == next -> priority){
+-		//  	if (p-> nice > next -> nice){
+-		//  		next->counter++;
+-		//  		next = p;
+-		//  	}else if (p-> nice == next -> nice){
+-		//  		if(p -> counter > next -> counter){
+-		//  			next->counter++;
+-		//  			next = p;
+-		//  		}else{
+-		//  			p -> counter++;
+-		//  		}
+-		//  	}else{
+-		//  		p -> counter++;
+-		// 	}
+-		// }else{
+-		// 	p -> counter++;
+-		// }
++		nb_max_tickets += p->nb_tickets;
+ 	}
++
++	int rand_ticket = myrandom()%nb_max_tickets + 1;
+ 	
++	do {
++		rand_ticket -= p->nb_tickets;
++		p++;
++	} while (rand_ticket > 0);
++
++	next = p;
++
+ 	/* Switch to next process. */
+ 	next->priority = PRIO_USER;
+ 	next->state = PROC_RUNNING;
+diff --git a/src/kernel/sys/.fuse_hidden000000d000000001 b/src/kernel/sys/.fuse_hidden000000d000000001
+new file mode 100644
+index 00000000..e57b19b4
+--- /dev/null
++++ b/src/kernel/sys/.fuse_hidden000000d000000001
+@@ -0,0 +1,76 @@
++/*
++ * Copyright(C) 2011-2016 Pedro H. Penna   <pedrohenriquepenna@gmail.com>
++ *              2015-2016 Davidson Francis <davidsondfgl@hotmail.com>
++ *
++ * This file is part of Nanvix.
++ *
++ * Nanvix is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * Nanvix is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with Nanvix. If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <nanvix/const.h>
++#include <nanvix/syscall.h>
++
++/*
++ * System calls table.
++ */
++PUBLIC void (*syscalls_table[NR_SYSCALLS])(void)  = {
++	(void (*)(void))&sys_alarm,
++	(void (*)(void))&sys_brk,
++	(void (*)(void))&sys_fork,
++	(void (*)(void))&sys_getegid,
++	(void (*)(void))&sys_geteuid,
++	(void (*)(void))&sys_getgid,
++	(void (*)(void))&sys_getpgrp,
++	(void (*)(void))&sys_getpid,
++	(void (*)(void))&sys_getppid,
++	(void (*)(void))&sys_getuid,
++	(void (*)(void))&sys_kill,
++	(void (*)(void))&sys_nice,
++	(void (*)(void))&sys_pause,
++	(void (*)(void))&sys_setegid,
++	(void (*)(void))&sys_seteuid,
++	(void (*)(void))&sys_setgid,
++	(void (*)(void))&sys_setpgrp,
++	(void (*)(void))&sys_setuid,
++	(void (*)(void))&sys__exit,
++	(void (*)(void))&sys_wait,
++	(void (*)(void))&sys_signal,
++	(void (*)(void))&sys_access,
++	(void (*)(void))&sys_chdir,
++	(void (*)(void))&sys_chown,
++	(void (*)(void))&sys_chroot,
++	(void (*)(void))&sys_chmod,
++	(void (*)(void))&sys_open,
++	(void (*)(void))&sys_umask,
++	(void (*)(void))&sys_read,
++	(void (*)(void))&sys_write,
++	(void (*)(void))&sys_close,
++	(void (*)(void))&sys_execve,
++	(void (*)(void))&sys_lseek,
++	(void (*)(void))&sys_pipe,
++	(void (*)(void))&sys_stat,
++	(void (*)(void))&sys_fcntl,
++	(void (*)(void))&sys_sync,
++	(void (*)(void))&sys_unlink,
++	(void (*)(void))&sys_dup2,
++	(void (*)(void))&sys_ioctl,
++	(void (*)(void))&sys_link,
++	(void (*)(void))&sys_uname,
++	(void (*)(void))&sys_utime,
++	(void (*)(void))&sys_ustat,
++	(void (*)(void))&sys_times,
++	(void (*)(void))&sys_shutdown,
++	(void (*)(void))&sys_ps,
++	(void (*)(void))&sys_gticks
++};
+diff --git a/src/kernel/sys/fork.c b/src/kernel/sys/fork.c
+index c9a5ab9a..84d567a6 100644
+--- a/src/kernel/sys/fork.c
++++ b/src/kernel/sys/fork.c
+@@ -154,7 +154,7 @@ found:
+ 	proc->alarm = 0;
+ 	proc->next = NULL;
+ 	proc->chain = NULL;
+-	proc -> tickets = (50 - proc -> priority)/10;
++	proc->nb_tickets = (50 - proc->priority) / 10;
+ 	sched(proc);
+ 
+ 	curr_proc->nchildren++;
+diff --git a/src/kernel/sys/sem.c b/src/kernel/sys/sem.c
+index 52ffe761..f27c89e1 100644
+--- a/src/kernel/sys/sem.c
++++ b/src/kernel/sys/sem.c
+@@ -1,2 +1,49 @@
++#include <sys/sem.h>
++#include <nanvix/pm.h>
++
++
++PUBLIC struct semaphore tab_sem[SEM_MAX];
++
++PUBLIC void init_tab_sem() {
++	for (int i = 0; i < SEM_MAX; i++) {
++		tab_sem[i].size = -1;
++	}
++}
++
++PUBLIC int get_index(int id) {
++	return tab_sem[id].index;
++}
++
++PUBLIC int get_size(int id) {
++	return tab_sem[id].size;
++}
++
++PUBLIC void set_size(int id, int val) {
++	tab_sem[id].size = val;
++}
++
++PUBLIC int get_value(int id) {
++	return tab_sem[id].value;
++}
++
++PUBLIC struct semaphore get_sem(int id) {
++	return tab_sem[id];
++}
++
++PUBLIC void set_sem(int id, struct semaphore sem) {
++	tab_sem[id] = sem;
++}
++
++PUBLIC unsigned get_key(int id){
++	return tab_sem[id].key;
++}
++
++PUBLIC int first_free() {
++	for (int i = 0; i < SEM_MAX; i++) {
++		if (tab_sem[i].size == -1) {
++			return i;
++		}
++	}
++	return -1;
++}
+ 
+-#include <sem.h>
+diff --git a/src/kernel/sys/semctl.c b/src/kernel/sys/semctl.c
+index e69de29b..e7f4f9f2 100644
+--- a/src/kernel/sys/semctl.c
++++ b/src/kernel/sys/semctl.c
+@@ -0,0 +1,25 @@
++#include <nanvix/syscall.h>
++#include <sys/sem.h>
++
++int sys_semctl(int semid, int cmd, int val) {
++	switch (cmd) {
++		case GETVAL:
++			return get_index(semid);
++			break;
++		case SETVAL:
++			if (get_size(semid) == -1) {
++				return -1;
++			} else {
++				set_size(semid,val);
++				return 0;
++			}
++			break;
++		case IPC_RMID:
++			if (get_size(semid) == get_value(semid)) {
++				set_size(semid,-1);
++				return 0;
++			}else{ return -1; }
++			break;
++	}
++	return -1;
++}
+\ No newline at end of file
+diff --git a/src/kernel/sys/semget.c b/src/kernel/sys/semget.c
+index cc826a34..1887803f 100644
+--- a/src/kernel/sys/semget.c
++++ b/src/kernel/sys/semget.c
+@@ -1,15 +1,31 @@
+ #include <sys/sem.h>
+ 
+-int sys_semget(int key){
++
++int create(int n, unsigned key){
++	struct semaphore s;
++	s.index = first_free();
++	s.value = n;
++	s.size = n;
++	s.key = key;
++	set_sem(s.index, s);
++	return s.index;
++
++}
++
++int sys_semget(unsigned key){
+ 	int semid = 0;
+ 	for(int i = 0; i<SEM_MAX; i++){
+-		if(tab_sem[i].index == key){
++		if(get_key(i) == key && get_size(i) != -1){
+ 			semid = i;
+ 		}
+ 	}
+ 	if(semid == 0){
+-		struct semaphore s;
+-		semid = s.create(1);
++		// we create a new semaphore 
++		semid = create(0, key);
+ 	}
++	
+ 	return semid;
+-}
+\ No newline at end of file
++}
++
++
++
+diff --git a/src/kernel/sys/semop.c b/src/kernel/sys/semop.c
+index e69de29b..c4bdfe35 100644
+--- a/src/kernel/sys/semop.c
++++ b/src/kernel/sys/semop.c
+@@ -0,0 +1,50 @@
++#include <nanvix/syscall.h>
++#include <sys/sem.h>
++#include <nanvix/pm.h>
++
++
++/*
++La fonction semop permet d’effectuer des opérations atomiques incrémentant
++ou décrémentant la variable associée au sémaphore identifié par semid.
++Une valeur négative pour op spécifie l’opération downw () et une valeur
++positive l’opération up ().
++La fonction retourne 0 en cas de réussite, ou −1 en cas d’erreur.
++*/
++
++void down(struct semaphore s) {
++	if (s.size > 0) {
++		s.size --;
++	}else {
++		sleep(s.waiting->chain, curr_proc->priority);
++	}
++}
++
++void up(struct semaphore s) {
++	if (s.size == 0) {
++		wakeup(s.waiting->chain);
++	}else {
++		s.size ++;
++	}
++}
++
++int sys_semop(int semid, int op){
++	struct semaphore s;
++	int find = 0;
++	for(int i = 0 ; i < SEM_MAX && find == 0; i++){
++		s = get_sem(i);
++		if(s.index == semid){
++			find = 1;
++		}
++	}
++	if (find != 0){
++		if (op < 0){
++			down(s);
++		}else {
++			up(s);
++		}
++	}else{
++		return -1;
++	}
++
++	return 0;
++}
+\ No newline at end of file
+diff --git a/src/kernel/sys/syscalls.c b/src/kernel/sys/syscalls.c
+index e57b19b4..a7f9edc2 100644
+--- a/src/kernel/sys/syscalls.c
++++ b/src/kernel/sys/syscalls.c
+@@ -72,5 +72,8 @@ PUBLIC void (*syscalls_table[NR_SYSCALLS])(void)  = {
+ 	(void (*)(void))&sys_times,
+ 	(void (*)(void))&sys_shutdown,
+ 	(void (*)(void))&sys_ps,
+-	(void (*)(void))&sys_gticks
++	(void (*)(void))&sys_gticks,
++	(void (*)(void))&sys_semget,
++	(void (*)(void))&sys_semctl,
++	(void (*)(void))&sys_semop
+ };

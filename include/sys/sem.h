@@ -35,19 +35,22 @@
 		int index;
 		int value;
 		int size;
-		int key;
+		unsigned key;
+		_Bool active;
 		struct process * waiting;
 	}semaphore;
 
 	extern void init_tab_sem();
 	extern int first_free();
 	extern int get_size(int);
-	extern int get_index(int);
 	extern int get_value(int);
 	extern void set_size(int,int);
 	extern unsigned get_key(int);
-	extern struct semaphore get_sem(int);
-	extern void set_sem(int,struct semaphore);
+	extern struct semaphore * get_sem(int);
+	extern void set_sem(int, struct semaphore);
+	extern _Bool is_active(int);
+	extern void set_active(int,_Bool);
+	extern void echo(struct semaphore);
 
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);

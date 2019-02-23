@@ -4,10 +4,14 @@
 int sys_semctl(int semid, int cmd, int val) {
 	switch (cmd) {
 		case GETVAL:
-			return get_index(semid);
+			if (is_active(semid)) {
+				return get_value(semid);
+			} else {
+				return -1;
+			}
 			break;
 		case SETVAL:
-			if (get_size(semid) == -1) {
+			if (!is_active(semid)) {
 				return -1;
 			} else {
 				set_size(semid,val);
@@ -16,7 +20,7 @@ int sys_semctl(int semid, int cmd, int val) {
 			break;
 		case IPC_RMID:
 			if (get_size(semid) == get_value(semid)) {
-				set_size(semid,-1);
+				set_active(semid, 0);
 				return 0;
 			}else{ return -1; }
 			break;

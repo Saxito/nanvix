@@ -28,6 +28,7 @@
 #include <nanvix/syscall.h>
 #include <sys/sem.h>
 #include <fcntl.h>
+#include <sys/sem.h>
 
 
 /**

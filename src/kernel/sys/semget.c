@@ -26,8 +26,8 @@ int create(int n, unsigned key){
 
 int sys_semget(unsigned key){
 	int semid = 0;
-	for(int i = 0; i<SEM_MAX; i++){
-		if(get_key(i) == key && get_size(i) != -1){
+	for(int i = 0; i < SEM_MAX; i++){
+		if(get_key(i) == key && get_value(i) != SEM_MAX+1){
 			semid = i;
 		}
 	}
@@ -36,7 +36,6 @@ int sys_semget(unsigned key){
 		semid = create(0, key);
 		kprintf("semaphore %d created", semid);
 	}
-	
 	return semid;
 }
 

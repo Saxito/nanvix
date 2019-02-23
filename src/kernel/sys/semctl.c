@@ -1,5 +1,6 @@
 #include <nanvix/syscall.h>
 #include <sys/sem.h> 
+#include <nanvix/klib.h>
 
 int sys_semctl(int semid, int cmd, int val) {
 	switch (cmd) {

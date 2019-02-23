@@ -1,7 +1,7 @@
 #include <nanvix/syscall.h>
 #include <sys/sem.h>
 #include <nanvix/pm.h>
-
+#include <nanvix/klib.h>
 
 /*
 La fonction semop permet d’effectuer des opérations atomiques incrémentant

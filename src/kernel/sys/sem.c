@@ -28,8 +28,8 @@ PUBLIC struct semaphore * get_sem(int id) {
 	return tab_sem[id];
 }
 
-PUBLIC void set_sem(int id, struct semaphore sem) {
-	tab_sem[id] = &sem;
+PUBLIC void set_sem(int id, struct semaphore* sem) {
+	tab_sem[id] = sem;
 }
 
 PUBLIC unsigned get_key(int id){
@@ -44,17 +44,17 @@ PUBLIC void set_active(int id, _Bool val) {
 	tab_sem[id]->active = val;
 }
 
-PUBLIC void echo(struct semaphore s) {
-	kprintf("index : %d\n", s.index);
-	kprintf("value : %d\n", s.value);
-	kprintf("size : %d\n", s.size);
-	kprintf("key : %d\n", s.key);
-	kprintf("active : %d\n", s.active);
+PUBLIC void echo(struct semaphore* s) {
+	kprintf("index : %d", s->index);
+	kprintf("value : %d", s->value);
+	kprintf("size : %d", s->size);
+	kprintf("key : %d", s->key);
+	kprintf("active : %d", s->active);
 }
 
 PUBLIC int first_free() {
 	for (int i = 0; i < SEM_MAX; i++) {
-		if (!is_active(i)) {
+		if (is_active(i) == 0) {
 			kprintf("first free : %d", i);
 			return i;
 		}

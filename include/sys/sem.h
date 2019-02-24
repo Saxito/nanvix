@@ -47,10 +47,10 @@
 	extern void set_size(int,int);
 	extern unsigned get_key(int);
 	extern struct semaphore * get_sem(int);
-	extern void set_sem(int, struct semaphore);
+	extern void set_sem(int, struct semaphore*);
 	extern _Bool is_active(int);
 	extern void set_active(int,_Bool);
-	extern void echo(struct semaphore);
+	extern void echo(struct semaphore*);
 
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);

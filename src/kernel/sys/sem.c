@@ -62,6 +62,9 @@ PUBLIC void set_desactive(int id) {
 	(*tab_sem+id)-> active = 0;
 }
 
+PUBLIC struct process* get_waiting(int id){
+	return (*tab_sem+id)->waiting;
+}
 PUBLIC void set_waiting(int id, struct process* pro){
 	(*tab_sem+id)->waiting = pro;
 }
@@ -72,6 +75,38 @@ PUBLIC void echo(struct semaphore* s) {
 	kprintf("size : %d", s->size);
 	kprintf("key : %d", s->key);
 	kprintf("active : %d", s->active);
+}
+
+PUBLIC void down(int id) {
+	kprintf("debut down");
+	echo((*tab_sem+id));
+	if (get_size(id) > 0) {
+		kprintf("debut if");
+		set_size(id, get_size(id)-1) ;
+		kprintf("fin if");
+
+	}else {
+		kprintf("debut else");
+		struct process* wait = get_waiting(id);
+		sleep(wait->chain, curr_proc->priority);
+		kprintf("fin else");
+
+	}
+	kprintf("fin down");
+
+}
+
+PUBLIC void up(int id) {
+	kprintf("debut up");
+
+	if (get_size(id) == 0) {
+		struct process* wait = get_waiting(id);
+		wakeup(wait->chain);
+	}else {
+		set_size(id, get_size(id)+1) ;
+	}
+	kprintf("fin up");
+
 }
 
 PUBLIC int first_free() {

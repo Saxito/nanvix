@@ -55,7 +55,11 @@
 	extern void set_desactive(int);
 
 	extern void set_waiting(int, struct process* p);
+	extern struct process* get_waiting(int);
 	extern void echo(struct semaphore*);
+
+	extern void down(int);
+	extern void up(int);
 
 	extern int semget(unsigned);
 	extern int semctl(int, int, int);

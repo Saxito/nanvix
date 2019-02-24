@@ -443,12 +443,14 @@ int semaphore_test3(void)
 	SEM_CREATE(mutex, 1);
 	SEM_CREATE(empty, 2);
 	SEM_CREATE(full, 3);
+	printf("Create ok\n");
 		
 	/* Initialize semaphores. */
 	SEM_INIT(full, 0);
 	SEM_INIT(empty, BUFFER_SIZE);
 	SEM_INIT(mutex, 1);
 	
+	printf("init ok\n");
 	if ((pid = fork()) < 0)
 		return (-1);
 	
@@ -486,6 +488,7 @@ int semaphore_test3(void)
 		} while (item != (NR_ITEMS - 1));
 	}
 					
+	printf("before Destroy\n");
 	/* Destroy semaphores. */
 	SEM_DESTROY(mutex);
 	SEM_DESTROY(empty);

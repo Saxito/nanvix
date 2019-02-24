@@ -11,29 +11,13 @@ positive l’opération up ().
 La fonction retourne 0 en cas de réussite, ou −1 en cas d’erreur.
 */
 
-void down(struct semaphore * s) {
-	if (s->size > 0) {
-		s->size --;
-	}else {
-		sleep(s->waiting->chain, curr_proc->priority);
-	}
-}
-
-void up(struct semaphore * s) {
-	if (s->size == 0) {
-		wakeup(s->waiting->chain);
-	}else {
-		s->size ++;
-	}
-}
 
 int sys_semop(int semid, int op){
-	struct semaphore * s = get_sem(semid);
 	if (is_active(semid)) {
 		if (op < 0){
-			down(s);
+			down(semid);
 		}else {
-			up(s);
+			up(semid);
 		}
 		return 0;
 	} else {

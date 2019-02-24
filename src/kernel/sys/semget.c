@@ -32,7 +32,7 @@ int sys_semget(unsigned key){
 	}
 	if(semid == 0){
 		// we create a new semaphore
-		semid = create(0, key);
+		semid = create(1, key);
 		kprintf("semaphore %d created", semid);
 	}
 	return semid;

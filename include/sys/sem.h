@@ -36,7 +36,7 @@
 		int value;
 		int size;
 		unsigned key;
-		_Bool active;
+		int active;
 		struct process * waiting;
 	}semaphore;
 
@@ -44,12 +44,17 @@
 	extern int first_free();
 	extern int get_size(int);
 	extern int get_value(int);
+	extern void set_value(int, int);
 	extern void set_size(int,int);
 	extern unsigned get_key(int);
+	extern void set_key(int, unsigned);
 	extern struct semaphore * get_sem(int);
-	extern void set_sem(int, struct semaphore*);
-	extern _Bool is_active(int);
-	extern void set_active(int,_Bool);
+	// extern void set_sem(int, struct semaphore*);
+	extern int is_active(int);
+	extern void set_active(int);
+	extern void set_desactive(int);
+
+	extern void set_waiting(int, struct process* p);
 	extern void echo(struct semaphore*);
 
 	extern int semget(unsigned);

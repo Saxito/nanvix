@@ -7,41 +7,63 @@ PUBLIC struct semaphore * tab_sem[SEM_MAX];
 
 PUBLIC void init_tab_sem() {
 	for (int i = 0; i < SEM_MAX; i++) {
-		tab_sem[i]->active = 0;
-		tab_sem[i]->index = i;
+		(*tab_sem+i)-> active = 0;
+		(*tab_sem+i)-> index = i;
 	}
 }
 
+
 PUBLIC int get_size(int id) {
-	return tab_sem[id]->size;
+	return (*tab_sem+id)->size;
 }
 
 PUBLIC void set_size(int id, int val) {
-	tab_sem[id]->size = val;
+	(*tab_sem+id)->size = val;
 }
 
 PUBLIC int get_value(int id) {
-	return tab_sem[id]->value;
+	return (*tab_sem+id)->value;
+}
+
+PUBLIC void set_value(int id, int v){
+	(*tab_sem+id)-> value = v;
 }
 
 PUBLIC struct semaphore * get_sem(int id) {
-	return tab_sem[id];
+	return (*tab_sem+id);
 }
 
-PUBLIC void set_sem(int id, struct semaphore* sem) {
-	tab_sem[id] = sem;
-}
+// PUBLIC void set_sem(int id, struct semaphore* sem) {
+// 	// kprintf("id set = %d", id);
+// 	struct semaphore* s = tab_sem[id+1];
+// 	// (*tab_sem+id) = sem;
+// 	// tab_sem[id+1]= s;
+
+// }
 
 PUBLIC unsigned get_key(int id){
-	return tab_sem[id]->key;
+	return (*tab_sem+id)->key;
 }
 
-PUBLIC _Bool is_active(int id) {
-	return tab_sem[id]->active;
+PUBLIC void set_key(int id, unsigned k){
+	(*tab_sem+id)->key = k;
 }
 
-PUBLIC void set_active(int id, _Bool val) {
-	tab_sem[id]->active = val;
+PUBLIC int is_active(int id) {
+	return (*tab_sem+id)->active;
+}
+
+PUBLIC void set_active(int id) {
+	(*tab_sem+id)-> active = 1;
+}
+
+
+PUBLIC void set_desactive(int id) {
+	(*tab_sem+id)-> active = 0;
+}
+
+PUBLIC void set_waiting(int id, struct process* pro){
+	(*tab_sem+id)->waiting = pro;
 }
 
 PUBLIC void echo(struct semaphore* s) {
@@ -54,12 +76,13 @@ PUBLIC void echo(struct semaphore* s) {
 
 PUBLIC int first_free() {
 	for (int i = 0; i < SEM_MAX; i++) {
+		// kprintf("active i: %d  : %d ", i, is_active(i));
 		if (is_active(i) == 0) {
-			kprintf("first free : %d", i);
+			// kprintf("first free : %d", i);
 			return i;
 		}
 	}
-	kprintf("error first_free");
+	// kprintf("error first_free");
 	return -1;
 }
 

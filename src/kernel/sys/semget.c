@@ -6,30 +6,27 @@ int create(int n, unsigned key){
 	
 	struct process * p = NULL;
 	int index = first_free();
+	kprintf("index :%d", index);
 	struct semaphore* s = get_sem(index);
-	s->index= index;
 	kprintf("first free done %d", s->index);
-	s->value = n;
+	set_value(index, n);
 	kprintf("value done %d", s->value);
-	s->size = n;
+	set_size(index, n);
 	kprintf("size done %d", s->size);
-	s->key = key;
+	set_key(index ,key);
 	kprintf("key done %d", s->key);
-	s->active = 1;
+	set_active(index);
 	kprintf("active done %d", s->active);
-	s->waiting = p;
+	set_waiting(index, p);
 	kprintf("waiting done");
-	echo(s);
-	set_sem(index, s);
-	kprintf("set_sem done");
-	return s->index;
+	return index;
 
 }
 
 int sys_semget(unsigned key){
 	int semid = 0;
 	for(int i = 0; i < SEM_MAX; i++){
-		if(get_key(i) == key && get_value(i) != SEM_MAX+1){
+		if(get_key(i) == key && is_active(i) != 0){
 			semid = i;
 		}
 	}

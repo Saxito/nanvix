@@ -20,10 +20,8 @@ int sys_semctl(int semid, int cmd, int val) {
 			}
 			break;
 		case IPC_RMID:
-			if (get_size(semid) == get_value(semid)) {
 				set_desactive(semid);
 				return 0;
-			}else{ return -1; }
 			break;
 	}
 	return -1;

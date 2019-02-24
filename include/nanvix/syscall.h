@@ -269,6 +269,7 @@
 	EXTERN int sys_gticks(void);
 
 	
+	
 	EXTERN int sys_semget(int);
 
 	EXTERN int sys_semctl(int,int,int);

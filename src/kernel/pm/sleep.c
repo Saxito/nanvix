@@ -22,6 +22,7 @@
 #include <nanvix/klib.h>
 #include <nanvix/pm.h>
 
+
 /**
  * @brief Sleeping chain for idle process.
  */

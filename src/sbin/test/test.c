@@ -485,14 +485,16 @@ int semaphore_test3(void)
 				
 			SEM_UP(mutex);
 			SEM_UP(empty);
+			
 		} while (item != (NR_ITEMS - 1));
 	}
 					
-	printf("before Destroy\n");
+	
 	/* Destroy semaphores. */
 	SEM_DESTROY(mutex);
 	SEM_DESTROY(empty);
 	SEM_DESTROY(full);
+	printf("Destroy ok\n");
 	
 	close(buffer_fd);
 	unlink("buffer");

@@ -24,6 +24,7 @@
 #include <nanvix/klib.h>
 #include <nanvix/mm.h>
 #include <nanvix/pm.h>
+#include <nanvix/klib.h>
 #include "fs.h"
 
 /*
@@ -75,6 +76,8 @@ PRIVATE struct process *chain = NULL;
  */
 PRIVATE struct buffer hashtab[BUFFERS_HASHTAB_SIZE];
 
+PRIVATE struct buffer* buf_cache = NULL;
+
 
 /**
  * @brief Hash function for block buffer hash table.
@@ -112,7 +115,6 @@ repeat:
 
 	i = HASH(dev, num);
 
-	disable_interrupts();
 
 	/* Search in hash table. */
 	for (buf = hashtab[i].hash_next; buf != &hashtab[i]; buf = buf->hash_next)
@@ -139,7 +141,6 @@ repeat:
 		}
 		
 		blklock(buf);
-		enable_interrupts();
 		
 		return (buf);
 	}
@@ -168,7 +169,6 @@ repeat:
 	if (buf->flags & BUFFER_DIRTY)
 	{
 		blklock(buf);
-		enable_interrupts();
 		bwrite(buf);
 		goto repeat;
 	}
@@ -189,7 +189,6 @@ repeat:
 	hashtab[i].hash_next = buf;
 	
 	blklock(buf);
-	enable_interrupts();
 	
 	return (buf);
 }
@@ -318,9 +317,40 @@ PUBLIC struct buffer *bread(dev_t dev, block_t num)
 	/* Update buffer flags. */
 	buf->flags |= BUFFER_VALID;
 	buf->flags &= ~BUFFER_DIRTY;
-	
 	return (buf);
 }
+
+
+//New bread function which performs bread function
+PUBLIC struct buffer *breada( dev_t dev, block_t num){
+
+	struct buffer *buf;
+	if(buf_cache != NULL){
+		if((dev == buf_cache->dev) && (buf_cache -> num == num)){
+			buf = buf_cache;
+			buf_cache = buf->hash_next;
+			kprintf("prefetching");
+			return(buf_cache);
+		}
+	}
+	
+	buf = getblk(dev, num);
+	buf_cache = buf->hash_next;
+	kprintf("not prefetching");
+	/* Valid buffer? */
+	if (buf->flags & BUFFER_VALID)
+		return (buf);
+
+	bdev_readblk(buf);
+	
+	/* Update buffer flags. */
+	buf->flags |= BUFFER_VALID;
+	buf->flags &= ~BUFFER_DIRTY;
+
+	return (buf);
+}
+
+
 
 /**
  * @brief Writes a block buffer to the underlying device.

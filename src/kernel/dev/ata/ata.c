@@ -226,6 +226,25 @@ PRIVATE struct atadev
 	} queue;
 } ata_devices[4];
 
+PRIVATE struct atadeva
+{
+	/* General information. */
+	int flags;             /* Flags (see above).                         */
+	struct ata_info info;  /* Device information.                        */
+	struct process *chain; /* Process waiting for operation to complete. */
+	
+	/* Block operation queue. */
+	struct
+	{
+		int size;                                   /* Current size.         */
+		int head;                                   /* Head.                 */
+		int tail;                                   /* Tail.                 */
+		struct request requests[ATADEV_QUEUE_SIZE]; /* Blocks.               */
+		struct process *chain;                      /* Processes wanting for *
+		                                             * a slot in the queue.  */
+	} queue;
+} ata_devicesa[4];
+
 /*
  * Default I/O ports for ATA controller.
  */
@@ -663,6 +682,25 @@ PRIVATE int ata_readblk(unsigned minor, buffer_t buf)
 	return (0);
 }
 
+PRIVATE int ata_readblka(unsigned minor, buffer_t buf)
+{
+	struct atadeva *dev;
+	
+	/* Invalid minor device. */
+	if (minor >= 4)
+		return (-EINVAL);
+	
+	dev = &ata_devicesa[minor];
+	
+	/* Device not valid. */
+	if (!(dev->flags & ATADEV_VALID))
+		return (-EINVAL);
+	
+	ata_sched_buffered(minor, buf, REQ_BUF | REQ_SYNC);
+	
+	return (0);
+}
+
 /*
  * Writes a block to a ATA device.
  */
@@ -848,6 +886,14 @@ PRIVATE const struct bdev ata_ops = {
 	&ata_readblk, /* readblk()  */
 	&ata_writeblk /* writeblk() */
 };
+
+PRIVATE const struct bdeva ata_opsa = {
+	&ata_read,    /* read()     */
+	&ata_write,   /* write()    */
+	&ata_readblka, /* readblk()  */
+	&ata_writeblk /* writeblk() */
+};
+
 
 /*
  * Generic ATA interrupt handler.
@@ -1038,4 +1084,6 @@ PUBLIC void ata_init(void)
 		kpanic("INT_ATA2 busy");
 	
 	bdev_register(ATA_MAJOR, &ata_ops);
+
+
 }

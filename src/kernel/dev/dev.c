@@ -197,6 +197,10 @@ PRIVATE const struct bdev *bdevsw[NR_BLKDEV] = {
 	NULL  /* /dev/hdd     */
 };
 
+PRIVATE const struct bdeva *bdevswa[NR_BLKDEV] = {
+	NULL, /* /dev/ramdisk */
+	NULL  /* /dev/hdd     */
+};
 /*
  * Registers a block device.
  */
@@ -215,6 +219,10 @@ PUBLIC int bdev_register(unsigned major, const struct bdev *dev)
 	
 	return (0);
 }
+
+
+
+
 
 /*
  * Writes to a block device.
@@ -275,6 +283,7 @@ PUBLIC void bdev_writeblk(buffer_t buf)
 /*
  * Reads a block from a block device.
  */
+
 PUBLIC void bdev_readblk(buffer_t buf)
 {
 	int err;   /* Error ?        */
@@ -292,6 +301,28 @@ PUBLIC void bdev_readblk(buffer_t buf)
 	
 	/* Read block. */
 	err = bdevsw[MAJOR(dev)]->readblk(MINOR(dev), buf);
+	if (err)
+		kpanic("failed to read block from device");
+}
+
+PUBLIC void bdev_readblka(buffer_t buf)
+{
+	int err;   /* Error ?        */
+	dev_t dev; /* Device number. */
+	
+	dev = buffer_dev(buf);
+	
+	/* Invalid device. */
+	if (bdevswa[MAJOR(dev)] == NULL)
+		kpanic("reading block from invalid device");
+		
+	/* Operation not supported. */
+	if (bdevswa[MAJOR(dev)]->readblka == NULL)
+		kpanic("block device cannot read blocks");
+	
+	/* Read block. */
+	err = bdevswa[MAJOR(dev)]->readblka(MINOR(dev), buf);
+
 	if (err)
 		kpanic("failed to read block from device");
 }

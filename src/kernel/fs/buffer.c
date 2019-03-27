@@ -76,7 +76,6 @@ PRIVATE struct process *chain = NULL;
  */
 PRIVATE struct buffer hashtab[BUFFERS_HASHTAB_SIZE];
 
-PRIVATE struct buffer* buf_cache = NULL;
 
 
 /**
@@ -115,7 +114,7 @@ repeat:
 
 	i = HASH(dev, num);
 
-
+	disable_interrupts();
 	/* Search in hash table. */
 	for (buf = hashtab[i].hash_next; buf != &hashtab[i]; buf = buf->hash_next)
 	{		
@@ -141,6 +140,7 @@ repeat:
 		}
 		
 		blklock(buf);
+		enable_interrupts();
 		
 		return (buf);
 	}
@@ -169,6 +169,7 @@ repeat:
 	if (buf->flags & BUFFER_DIRTY)
 	{
 		blklock(buf);
+		enable_interrupts();
 		bwrite(buf);
 		goto repeat;
 	}
@@ -189,6 +190,8 @@ repeat:
 	hashtab[i].hash_next = buf;
 	
 	blklock(buf);
+	enable_interrupts();
+
 	
 	return (buf);
 }
@@ -321,36 +324,99 @@ PUBLIC struct buffer *bread(dev_t dev, block_t num)
 }
 
 
-//New bread function which performs bread function
-PUBLIC struct buffer *breada( dev_t dev, block_t num){
+PUBLIC int is_incache(dev_t dev, block_t num){
 
-	struct buffer *buf;
-	if(buf_cache != NULL){
-		if((dev == buf_cache->dev) && (buf_cache -> num == num)){
-			buf = buf_cache;
-			buf_cache = buf->hash_next;
-			kprintf("prefetching");
-			return(buf_cache);
+	unsigned i;         /* Hash table index. */
+	struct buffer *buf; /* Buffer.           */
+	
+	/* Should not happen. */
+	if ((dev == 0) && (num == 0))
+		kpanic("getblk(0, 0)");
+
+	i = HASH(dev, num);
+
+
+	/* Search in hash table. */
+	for (buf = hashtab[i].hash_next; buf != &hashtab[i]; buf = buf->hash_next)
+	{		
+		/* If found */
+		if ((buf->dev == dev) || (buf->num == num)){
+			return 1;
 		}
 	}
+	return 0;
+} 
+
+PUBLIC struct buffer * breada(dev_t dev, block_t num){
+
+	struct buffer *buf;
 	
 	buf = getblk(dev, num);
-	buf_cache = buf->hash_next;
-	kprintf("not prefetching");
+	
 	/* Valid buffer? */
 	if (buf->flags & BUFFER_VALID)
 		return (buf);
 
-	bdev_readblk(buf);
+	bdev_readblka(buf);
 	
 	/* Update buffer flags. */
 	buf->flags |= BUFFER_VALID;
 	buf->flags &= ~BUFFER_DIRTY;
-
 	return (buf);
+	
+	// struct buffer *buf;
+
+	// if(!is_incache(dev,num)){
+	// 	kprintf("not cache");
+	// 	buf = getblk(dev,num);
+	// 	if(!(buf->flags & BUFFER_VALID)){
+	// 		bdev_readblk(buf);
+	// 		buf->flags |= BUFFER_VALID;
+	// 		buf->flags &= ~BUFFER_DIRTY;
+	// 	}
+	// }
+	// else{
+	// 	buf = bread(dev,num);
+	// 	return buf;
+	// }
+	// for(int i =0 ; i<10 ; i++){
+	// 	if(buf->hash_next != NULL){
+	// 		buf=buf-> hash_next;
+	// 		if(!(buf->flags & BUFFER_VALID)){
+	// 			bdev_readblka(buf);
+	// 			buf->flags |= BUFFER_VALID;
+	// 			buf->flags &= ~BUFFER_DIRTY;
+	// 		}
+	// 	}
+	// }
+
+	// return buf;
+
+	// return buf;
+
+	// struct buffer *buf;
+	
+	// buf = getblk(dev, num);
+	
+	// /* Valid buffer? */
+	// if (buf->flags & BUFFER_VALID)
+	// 	return (buf);
+
+	// bdev_readblk(buf);
+	// for(int i = 0; i<2; i++){
+	// 	if(buf->hash_next != NULL){
+	// 		buf->flags |= BUFFER_VALID;
+	// 		buf->flags &= ~BUFFER_DIRTY;
+	// 		buf = buf->hash_next;
+	// 		bdev_readblka(buf);
+	// 	}	
+	// }
+	
+
+	// return (buf);
+
+
 }
-
-
 
 /**
  * @brief Writes a block buffer to the underlying device.

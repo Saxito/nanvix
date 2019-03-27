@@ -69,7 +69,10 @@
 	EXTERN void blkunlock(buffer_t);
 	EXTERN void brelse(buffer_t);
 	EXTERN buffer_t bread(dev_t, block_t);
+
+	EXTERN int is_incache(dev_t, block_t); 
 	EXTERN buffer_t breada(dev_t, block_t); // new fonction for prefetching
+
 	EXTERN void bwrite(buffer_t);
 	EXTERN void buffer_dirty(buffer_t, int);
 	EXTERN void *buffer_data(const_buffer_t);

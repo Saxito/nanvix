@@ -133,6 +133,14 @@
 		int (*writeblk)(unsigned, struct buffer *);           /* Write block. */
 	};
 	
+	struct bdeva
+	{
+		ssize_t (*reada)(dev_t, char *, size_t, off_t);        /* Read.        */
+		ssize_t (*writea)(dev_t, const char *, size_t, off_t); /* Write.       */
+		int (*readblka)(unsigned, struct buffer *);            /* Read block.  */
+		int (*writeblka)(unsigned, struct buffer *);           /* Write block. */
+	};
+	
 	/*
 	 * DESCRIPTION:
 	 *   The bdev_register() function attempts to register a block device
@@ -191,5 +199,11 @@
 	 * Reads a block from a block device.
 	 */
 	EXTERN void bdev_readblk(struct buffer *buf);
+	
+	/*
+	 * Reads a block from a block device.
+	 */
+	EXTERN void bdev_readblka(struct buffer *buf);
+
 	
 #endif /* DEV_H_ */

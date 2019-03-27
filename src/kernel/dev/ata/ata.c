@@ -887,12 +887,12 @@ PRIVATE const struct bdev ata_ops = {
 	&ata_writeblk /* writeblk() */
 };
 
-PRIVATE const struct bdeva ata_opsa = {
-	&ata_read,    /* read()     */
-	&ata_write,   /* write()    */
-	&ata_readblka, /* readblk()  */
-	&ata_writeblk /* writeblk() */
-};
+// PRIVATE const struct bdeva ata_opsa = {
+// 	&ata_read,    /* read()     */
+// 	&ata_write,   /* write()    */
+// 	&ata_readblka, /* readblk()  */
+// 	&ata_writeblk /* writeblk() */
+// };
 
 
 /*
@@ -1036,7 +1036,7 @@ PUBLIC void ata_init(void)
 	/* Detect devices. */
 	for (i = 0, dvrl = 'a'; i < 4; i++, dvrl++)
 	{
-		kmemset(&ata_devices[i], 0, sizeof(struct atadev));
+		kmemset(&ata_devicesa[i], 0, sizeof(struct atadeva));
 		
 		ata_device_select(i);
 		

@@ -129,16 +129,16 @@
 	{
 		ssize_t (*read)(dev_t, char *, size_t, off_t);        /* Read.        */
 		ssize_t (*write)(dev_t, const char *, size_t, off_t); /* Write.       */
-		int (*readblk)(unsigned, struct buffer *);            /* Read block.  */
+		int (*readblka)(unsigned, struct buffer *);            /* Read block.  */
 		int (*writeblk)(unsigned, struct buffer *);           /* Write block. */
 	};
 	
 	struct bdeva
 	{
-		ssize_t (*reada)(dev_t, char *, size_t, off_t);        /* Read.        */
-		ssize_t (*writea)(dev_t, const char *, size_t, off_t); /* Write.       */
+		ssize_t (*read)(dev_t, char *, size_t, off_t);        /* Read.        */
+		ssize_t (*write)(dev_t, const char *, size_t, off_t); /* Write.       */
 		int (*readblka)(unsigned, struct buffer *);            /* Read block.  */
-		int (*writeblka)(unsigned, struct buffer *);           /* Write block. */
+		int (*writeblk)(unsigned, struct buffer *);           /* Write block. */
 	};
 	
 	/*
@@ -155,6 +155,8 @@
 	 *   - EBUSY: there is a device registered with the same major number.
 	 */
 	EXTERN int bdev_register(unsigned major, const struct bdev *dev);
+	EXTERN int bdev_registera(unsigned major, const struct bdeva *dev);
+
 
 	/*
 	 * DESCRIPTION:

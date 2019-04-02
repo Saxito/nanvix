@@ -224,26 +224,10 @@ PRIVATE struct atadev
 		struct process *chain;                      /* Processes wanting for *
 		                                             * a slot in the queue.  */
 	} queue;
-} ata_devices[4];
+} ata_devices[4], ata_devicesa[4];
 
-PRIVATE struct atadeva
-{
-	/* General information. */
-	int flags;             /* Flags (see above).                         */
-	struct ata_info info;  /* Device information.                        */
-	struct process *chain; /* Process waiting for operation to complete. */
-	
-	/* Block operation queue. */
-	struct
-	{
-		int size;                                   /* Current size.         */
-		int head;                                   /* Head.                 */
-		int tail;                                   /* Tail.                 */
-		struct request requests[ATADEV_QUEUE_SIZE]; /* Blocks.               */
-		struct process *chain;                      /* Processes wanting for *
-		                                             * a slot in the queue.  */
-	} queue;
-} ata_devicesa[4];
+
+
 
 /*
  * Default I/O ports for ATA controller.
@@ -638,9 +622,12 @@ PRIVATE void ata_sched(unsigned atadevid, unsigned flags, ...)
 	enable_interrupts();
 }
 
+
 /*
  * Schedules a buffered I/O operation.
  */
+
+
 PRIVATE void
 ata_sched_buffered(unsigned atadevid, buffer_t buf, unsigned flags)
 {
@@ -684,19 +671,20 @@ PRIVATE int ata_readblk(unsigned minor, buffer_t buf)
 
 PRIVATE int ata_readblka(unsigned minor, buffer_t buf)
 {
-	struct atadeva *dev;
+	struct atadev *dev;
 	
 	/* Invalid minor device. */
 	if (minor >= 4)
 		return (-EINVAL);
 	
-	dev = &ata_devicesa[minor];
+	dev = &ata_devices[minor];
 	
 	/* Device not valid. */
 	if (!(dev->flags & ATADEV_VALID))
 		return (-EINVAL);
 	
-	ata_sched_buffered(minor, buf, REQ_BUF | REQ_SYNC);
+	ata_sched_buffered(minor, buf, REQ_BUF);
+
 	
 	return (0);
 }
@@ -887,12 +875,12 @@ PRIVATE const struct bdev ata_ops = {
 	&ata_writeblk /* writeblk() */
 };
 
-// PRIVATE const struct bdeva ata_opsa = {
-// 	&ata_read,    /* read()     */
-// 	&ata_write,   /* write()    */
-// 	&ata_readblka, /* readblk()  */
-// 	&ata_writeblk /* writeblk() */
-// };
+PRIVATE const struct bdeva ata_opsa = {
+	&ata_read,    /* read()     */
+	&ata_write,   /* write()    */
+	&ata_readblka, /* readblk()  */
+	&ata_writeblk /* writeblk() */
+};
 
 
 /*
@@ -1036,8 +1024,9 @@ PUBLIC void ata_init(void)
 	/* Detect devices. */
 	for (i = 0, dvrl = 'a'; i < 4; i++, dvrl++)
 	{
-		kmemset(&ata_devicesa[i], 0, sizeof(struct atadeva));
-		
+		kmemset(&ata_devices[i], 0, sizeof(struct atadev));
+		kmemset(&ata_devicesa[i], 0, sizeof(struct atadev));
+
 		ata_device_select(i);
 		
 		/* Setup ATA device. */
@@ -1084,6 +1073,9 @@ PUBLIC void ata_init(void)
 		kpanic("INT_ATA2 busy");
 	
 	bdev_register(ATA_MAJOR, &ata_ops);
+	bdev_registera(ATA_MAJOR, &ata_opsa);
+
+
 
 
 }

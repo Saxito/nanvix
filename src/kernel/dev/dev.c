@@ -220,8 +220,21 @@ PUBLIC int bdev_register(unsigned major, const struct bdev *dev)
 	return (0);
 }
 
-
-
+PUBLIC int bdev_registera(unsigned major, const struct bdeva *dev)
+{
+	/* Invalid major number? */
+	if (major >= NR_BLKDEV)
+		return (-EINVAL);
+	
+	/* Device already registered? */
+	if (bdevswa[major] != NULL)
+		return (-EBUSY);
+	
+	/* Register block device. */
+	bdevswa[major] = dev;
+	
+	return (0);
+}
 
 
 /*
@@ -296,11 +309,11 @@ PUBLIC void bdev_readblk(buffer_t buf)
 		kpanic("reading block from invalid device");
 		
 	/* Operation not supported. */
-	if (bdevsw[MAJOR(dev)]->readblk == NULL)
+	if (bdevsw[MAJOR(dev)]->readblka == NULL)
 		kpanic("block device cannot read blocks");
 	
 	/* Read block. */
-	err = bdevsw[MAJOR(dev)]->readblk(MINOR(dev), buf);
+	err = bdevsw[MAJOR(dev)]->readblka(MINOR(dev), buf);
 	if (err)
 		kpanic("failed to read block from device");
 }
@@ -314,7 +327,7 @@ PUBLIC void bdev_readblka(buffer_t buf)
 	
 	/* Invalid device. */
 	if (bdevswa[MAJOR(dev)] == NULL)
-		kpanic("reading block from invalid device");
+		kpanic("reading block_a from invalid device");
 		
 	/* Operation not supported. */
 	if (bdevswa[MAJOR(dev)]->readblka == NULL)

@@ -307,6 +307,7 @@ PUBLIC void brelse(struct buffer *buf)
  */
 PUBLIC struct buffer *bread(dev_t dev, block_t num)
 {
+
 	struct buffer *buf;
 	
 	buf = getblk(dev, num);
@@ -324,33 +325,10 @@ PUBLIC struct buffer *bread(dev_t dev, block_t num)
 }
 
 
-PUBLIC int is_incache(dev_t dev, block_t num){
-
-	unsigned i;         /* Hash table index. */
-	struct buffer *buf; /* Buffer.           */
-	
-	/* Should not happen. */
-	if ((dev == 0) && (num == 0))
-		kpanic("getblk(0, 0)");
-
-	i = HASH(dev, num);
-
-
-	/* Search in hash table. */
-	for (buf = hashtab[i].hash_next; buf != &hashtab[i]; buf = buf->hash_next)
-	{		
-		/* If found */
-		if ((buf->dev == dev) || (buf->num == num)){
-			return 1;
-		}
-	}
-	return 0;
-} 
-
 PUBLIC struct buffer * breada(dev_t dev, block_t num){
 
 	struct buffer *buf;
-	
+		
 	buf = getblk(dev, num);
 	
 	/* Valid buffer? */
@@ -358,6 +336,7 @@ PUBLIC struct buffer * breada(dev_t dev, block_t num){
 		return (buf);
 
 	bdev_readblka(buf);
+
 	
 	/* Update buffer flags. */
 	buf->flags |= BUFFER_VALID;

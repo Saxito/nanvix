@@ -683,7 +683,8 @@ PRIVATE int ata_readblka(unsigned minor, buffer_t buf)
 	if (!(dev->flags & ATADEV_VALID))
 		return (-EINVAL);
 	
-	ata_sched_buffered(minor, buf, REQ_BUF);
+	
+	ata_sched_buffered(minor, buf, REQ_BUF); // suppression du flag REQ_SYNC pour faire de l'asynchrone
 
 	
 	return (0);

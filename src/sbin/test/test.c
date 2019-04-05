@@ -155,6 +155,7 @@ static int io_test(void)
 	/* Read hdd. */
 	if (read(fd, buffer, MEMORY_SIZE) != MEMORY_SIZE)
 		exit(EXIT_FAILURE);
+
 	
 	t1 = times(&timing);
 	

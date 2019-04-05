@@ -309,11 +309,11 @@ PUBLIC void bdev_readblk(buffer_t buf)
 		kpanic("reading block from invalid device");
 		
 	/* Operation not supported. */
-	if (bdevsw[MAJOR(dev)]->readblka == NULL)
+	if (bdevsw[MAJOR(dev)]->readblk == NULL)
 		kpanic("block device cannot read blocks");
 	
 	/* Read block. */
-	err = bdevsw[MAJOR(dev)]->readblka(MINOR(dev), buf);
+	err = bdevsw[MAJOR(dev)]->readblk(MINOR(dev), buf);
 	if (err)
 		kpanic("failed to read block from device");
 }
@@ -335,6 +335,7 @@ PUBLIC void bdev_readblka(buffer_t buf)
 	
 	/* Read block. */
 	err = bdevswa[MAJOR(dev)]->readblka(MINOR(dev), buf);
+
 
 	if (err)
 		kpanic("failed to read block from device");

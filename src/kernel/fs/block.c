@@ -84,7 +84,7 @@ found:
 	sb->flags |= SUPERBLOCK_DIRTY;
 	
 	/* Clean block to avoid security issues. */
-	buf = bread(sb->dev, blk);	
+	buf = breada(sb->dev, blk);	
 	kmemset(buf->data, 0, BLOCK_SIZE);
 	buf->flags |= BUFFER_DIRTY;
 	brelse(buf);

@@ -286,13 +286,17 @@ PUBLIC ssize_t file_read(struct inode *i, void *buf, size_t n, off_t off)
 	size_t blkoff;       /* Block offset.         */
 	size_t chunk;        /* Data chunk size.      */
 	block_t blk;         /* Working block number. */
+	block_t blk_prec=0;
 	struct buffer *bbuf; /* Working block buffer. */
+
+	int prefetching = 0;
 		
 	p = buf;
 	
 	inode_lock(i);
 	
 	/* Read data. */
+	kprintf("debut readfile");
 	do
 	{
 		blk = block_map(i, off, 0);
@@ -301,7 +305,23 @@ PUBLIC ssize_t file_read(struct inode *i, void *buf, size_t n, off_t off)
 		if (blk == BLOCK_NULL)
 			goto out;
 		
-		bbuf = breada(i->dev, blk);
+
+		if(prefetching>=2){
+			kprintf("bread asynchrone : numero de block : %d", (int)blk);
+
+			bbuf= breada(i->dev, blk);
+
+		}else{
+			if(((int)blk_prec)+1 == (int)blk){
+				prefetching++;
+			}else{
+				prefetching=0;
+			}
+			kprintf("bread normal : numero de block : %d", (int)blk);
+			bbuf=bread(i->dev, blk);
+		}
+		blk_prec = blk;
+
 			
 		blkoff = off % BLOCK_SIZE;
 		
@@ -328,6 +348,7 @@ PUBLIC ssize_t file_read(struct inode *i, void *buf, size_t n, off_t off)
 out:
 	inode_touch(i);
 	inode_unlock(i);
+
 	return ((ssize_t)(p - (char *)buf));
 }
 
